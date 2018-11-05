@@ -1,0 +1,327 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import linregress
+import matplotlib.gridspec as gp
+
+titles=['blue','green','red']
+off= 400
+
+images = (400, 200, 30)
+color_g = []
+
+a_values = []
+
+for index, pixel in enumerate(images):
+  a_values.append(images[0] / float(images[index]))
+
+color_channels = ('b', 'g', 'r')
+from_color_array = [[255, 0, 0], [0, 255, 0], [0, 0, 255]]
+
+def b_g_channel_function(b, channel):
+  return np.power(b, color_g[channel])
+
+def copy_image_size(image):
+  return np.zeros((image.shape[0], image.shape[1], 3), np.uint8)
+
+def is_pixel_saturated(image, height, width):
+  return image.item(height, width, 0) == 255 and image.item(height, width, 1) == 255 and image.item(height, width, 2) == 255
+
+def create_histograms(image, location, name, tree_size):
+  for color_index, color in enumerate(color_channels):
+    print '  ' * tree_size + color
+    histr = cv2.calcHist([image], [color_index], None, [256], [0, 256])
+
+    plt.figure(1)
+    plt.plot(histr, color = color)
+    plt.figure(2)
+    plt.plot(histr, color = color)
+    plt.figure(1)
+
+    plt.xlim([0, 256])
+    plt.savefig(location + color + '_' + name + '.png', bbox_inches='tight')
+    plt.close()
+
+  plt.figure(2)
+  plt.xlim([0, 256])
+  # plt.ylim([0, 200000])
+  plt.savefig(location + 'all_' + name + '.png', bbox_inches='tight')
+  plt.close()
+
+def make_images_linear(image):
+  for height in range(image.shape[0]):
+    for width in range(image.shape[1]):
+      for channel in range(len(color_channels)):
+        if not is_pixel_saturated(image, height, width):
+          b = image.item(height, width, channel)
+          image.itemset((height, width, channel), b_g_channel_function(b, channel))
+  return image
+
+def get_color_calibration_images():
+  calibration_images = []
+  # Read the image files 'p' for phone and 'w' for Nikon pictures
+  for n in range(1,6):
+    calibration_images.append(cv2.imread('./phoneCalibration/p'+str(n)+'.JPG'))
+
+  blue=[]
+  green=[]
+  red=[]
+
+  for img in calibration_images:
+      b, g, r = cv2.split(img)
+      blue.append(b)
+      green.append(g)
+      red.append(r)
+
+  return [blue,green,red]
+
+def plot_channel_calibration_histograms(color_channel_images, color_channel_index):
+  plt.figure()
+  for n, img in enumerate(tuple(color_channel_images)):
+      plt.subplot(3,3,n+1),
+      plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
+      plt.hist(img.ravel(),256,[0,256])
+      plt.suptitle("Histogram of Images")
+      plt.title("Col="+ str(titles[color_channel_index]) + " img=%d" %n)
+      plt.savefig('./results/part_one/histogram_col-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+  plt.close()
+
+def plot_masked_images(masked_img, color_channel_index):
+  plt.figure()
+  for n, img in enumerate(tuple(masked_img)):
+      plt.subplot(3,3,n+1), plt.imshow(img,'gray')
+      plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
+      plt.suptitle("Masked Img")
+      plt.title("Col= "+ str(titles[color_channel_index])+" img=%d" %n)
+      plt.savefig('./results/part_one/masked_img-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+  plt.close()
+
+def plot_masked_images_histogram(hist_mask, color_channel_index):
+  plt.figure()
+  for n, img in enumerate(tuple(hist_mask)):
+    plt.subplot(3,3,n+1), plt.plot(img)
+    plt.suptitle("Center Pixels of Images")
+    plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
+    plt.xlim([0,256])
+    plt.title('Col=' + str(titles[color_channel_index])+ " img=%d" %n)
+    plt.savefig('./results/part_one/mask_hist-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+  plt.close()
+
+def save_cropped_images(crop_img, color_channel_index):
+  plt.figure()
+  for n, img in enumerate(tuple(crop_img)):
+    plt.subplot(3,3,n+1), plt.imshow(img,'gray')
+    plt.suptitle("Cropped Images")
+    plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
+    plt.title('Col=' + str(titles[color_channel_index])+" img=%d"%n)
+    plt.savefig('./results/part_one/crop_img-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+  plt.close()
+
+def estimate_g_by_b(mu_img, time, color_channel_index):
+  slope, intercept, r,p,sigma = linregress(time,mu_img)
+  # print(slope,intercept,r,p,sigma)
+  y= intercept + slope * time
+  plt.figure()
+  plt.plot(time,mu_img,'b', time,y,'r', time,mu_img,'*' , label ='y=%.2f ax+%.2f'%(slope,intercept)),
+  plt.title("Estimation for parameter g from B'(T)' Col="+ str(titles[color_channel_index]))
+  plt.ylabel("Pixel Intesity B(T)")
+  plt.xlabel("T(s)")
+  plt.legend(loc='upper left')
+  plt.savefig('./results/part_one/g_estimate-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+  plt.close()
+
+def plot_log_b_for_t(mu_img, time, color_channel_index):
+  plt.figure()
+  logB=np.log10(mu_img)
+  logT=np.log10(time)
+  slope2, intercept2, r2,p2,sigma2=linregress(logT,logB)
+  a=slope2
+  g=1/a
+  b=intercept2
+  ylog=b + a*logT
+  # print(logB,logT,ylog)
+  plt.plot(logT,logB,'b',logT,ylog,'r', logT,logB,'*', label ='y=%.2fx + %.2f'%(a,b))
+  plt.title("Estimation for parameter g from Log(B'(T)') Col="+ str(titles[color_channel_index]))
+  plt.ylabel("Pixel Intesity Log(B(s)')")
+  plt.xlabel("Log(T(s))")
+  plt.legend(loc='upper left')
+  plt.savefig('./results/part_one/g_estimate_log-'+ str(titles[color_channel_index]) +'.png', bbox_inches='tight')
+  
+  print("g=", g)
+  with open("RGB_estimation_results.txt", "a") as file:
+      file.write(str(titles[color_channel_index])+ "\n" + "g=%f a=%f b=%f\n"%(g,slope2,intercept2))
+  plt.close()
+  return g
+
+def b_a_estimation(mu_img, g, time, color_channel_index):
+  plt.figure()
+  Bg=np.power(mu_img,g)
+  plt.plot(time,Bg)
+  plt.title("Estimation for parameter g from B'=B^1/a Col=" + str(titles[color_channel_index]))
+  plt.ylabel("Pixel Intesity B=B^1/a")
+  plt.xlabel("T(s)")
+  plt.savefig('./results/part_one/g_estimate_a-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+  plt.close()
+
+def part_one():
+  #File to output the values of a and g based on the estimation
+  with open("./RGB_estimation_results.txt", "w") as file:
+      file.write("#Estimation of parameter g from B'(T)\n#CMPE264 \n#Eduardo Hirata\n#Joshua Pena\n")
+
+  #For Nikon pictures 'w1.jpg'
+  # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float64')
+  time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float64')
+
+  color_calibration_images = get_color_calibration_images()
+
+  for color_channel_index, color_channel_images in enumerate(tuple(color_calibration_images)):
+    plt.figure()
+    for n , img in enumerate(tuple(color_channel_images)):
+        plt.subplot(3,3,n+1), plt.imshow(img,'gray')
+        plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
+        plt.suptitle("Original Images")
+        plt.title("Col="+ str(titles[color_channel_index])+" img=%d"%n)
+        plt.savefig('./results/part_one/init_images-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
+    plt.close()
+
+    plot_channel_calibration_histograms(color_channel_images, color_channel_index)
+
+    #To get the central pixel, lets create a rectangular mask that takes the pixels in the middle
+    mask = np.zeros(color_channel_images[0].shape[:2],np.uint8)
+    center_w = int(round(color_channel_images[0].shape[0]/2))
+    center_h = int(round(color_channel_images[0].shape[1]/2))
+    # print(col[0].shape[0], col[0].shape[1])
+    # print(center_w , center_h)
+
+    ###############################Apply a Mask #####################################
+    masked_img=[]
+    hist_mask=[]
+    crop_img=[]
+    mu_img=[]
+
+    mask[(center_w-off):(center_w+off), (center_h-off):(center_h+off)]=255  #Make the rest dark
+    for img in color_channel_images:
+      masked_img.append(cv2.bitwise_and(img,img, mask = mask))
+      hist_mask.append(cv2.calcHist([img],[0],mask,[256],[0,256]))
+      crop_img.append(img[(center_w-off):(center_w+off), (center_h-off):(center_h+off)])
+      mu_img.append(np.mean(crop_img))
+
+    plot_masked_images(masked_img, color_channel_index)
+
+    plot_masked_images_histogram(hist_mask, color_channel_index)
+
+    save_cropped_images(crop_img, color_channel_index)
+
+    estimate_g_by_b(mu_img, time, color_channel_index)
+
+    g = plot_log_b_for_t(mu_img, time, color_channel_index)
+
+    b_a_estimation(mu_img, g, time, color_channel_index)
+
+    color_g.append(g)
+    print 'finished aquiring ' + titles[color_channel_index] + ' g'
+  print 'finished part one'
+
+
+def part_two():
+  original_images = []
+  modified_images = []
+
+  for image_index, pixel in enumerate(images):
+    print pixel
+    img = cv2.imread('images/'+str(pixel)+'.JPG')
+
+    create_histograms(img, './results/part_two/', str(pixel) + '_original', 0)
+    img = make_images_linear(img)
+    create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1)
+
+    original_images.insert(0, img.copy())
+
+    cv2.imwrite('./results/part_two/new_' + str(pixel) + '.png', img)
+
+    if image_index != 0:
+      aValue = a_values[image_index]
+
+      for height in range(img.shape[0]):
+        for width in range(img.shape[1]):
+          for color_index, color in enumerate(color_channels):
+            img.itemset((height, width, color_index), img.item(height, width, color_index) / aValue)
+
+      create_histograms(img, './results/part_two/', str(pixel) + '_modified', 2)
+
+      cv2.imwrite('./results/part_two/new_' + str(pixel) + '_modified.png', img)
+
+    modified_images.insert(0, img)
+  
+  return original_images, modified_images
+
+def part_three(original_images, modified_images):
+  hrd1 = copy_image_size(modified_images[0])
+  hrd2 = copy_image_size(modified_images[0])
+
+  pixel_from_image_array = []
+  for image in modified_images:
+    pixel_from_image_array.append(copy_image_size(image))
+
+  pixel_from_together_hdr1 = copy_image_size(modified_images[0])
+  pixel_from_together_hdr2 = copy_image_size(modified_images[0])
+
+  for height in range(hrd1.shape[0]):
+    for width in range(hrd1.shape[1]):
+      for image_index, image in enumerate(tuple(modified_images)):
+        if not is_pixel_saturated(original_images[image_index], height, width):
+          hrd1[height, width] = image[height, width]
+
+          pixel_from_image_array[image_index][height, width] = [255, 255, 255]
+          pixel_from_together_hdr1[height, width] = from_color_array[image_index]
+          break
+
+      for color_index, color in enumerate(color_channels):
+        averageValue = 0
+        valuesUsed = 0
+        for image_index, image in enumerate(tuple(modified_images)):
+          if not is_pixel_saturated(original_images[image_index], height, width):
+            averageValue += image.item(height, width, color_index)
+            valuesUsed += 1
+            pixel_from_together_hdr2.itemset((height, width, image_index), 255)
+          else:
+            pixel_from_together_hdr2.itemset((height, width, color_index), 0)
+
+        averageValue = averageValue / valuesUsed
+        hrd2.itemset((height, width, color_index), averageValue)
+
+  create_histograms(hrd1, './results/part_three/', 'hrd1', 0)
+  create_histograms(hrd2, './results/part_three/', 'hrd2', 0)
+  cv2.imwrite('./results/part_three/hdr1.png', hrd1)
+  cv2.imwrite('./results/part_three/hdr2.png', hrd2)
+
+  cv2.imwrite('./results/part_three/pixel_from_together_hdr1.png', pixel_from_together_hdr1)
+  cv2.imwrite('./results/part_three/pixel_from_together_hdr2.png', pixel_from_together_hdr2)
+  for image_index, image in enumerate(tuple(pixel_from_image_array)):
+    cv2.imwrite('./results/part_three/' + str(3 - image_index) + '.png', image)
+
+  return hrd1, hrd2
+
+def part_four(hrd1, hrd2):
+  tonemap = cv2.createTonemapReinhard(1.5, 0, 0, 0)
+  tonemapHDR1 = tonemap.process(hrd1)
+  tonemapHDR2 = tonemap.process(hrd2)
+
+  hdr1_tonemap = np.clip(tonemapHDR1 * 255, 0, 255).astype('uint8')
+  hdr2_tonemap = np.clip(tonemapHDR2 * 255, 0, 255).astype('uint8')
+
+  cv2.imwrite('./results/part_four/hdr1_tonemap.png', hdr1_tonemap)
+  cv2.imwrite('./results/part_four/hdr2_tonemap.png', hdr2_tonemap)
+  cv2.imwrite('./results/part_four/hdr1_tonemap_v2.png', tonemapHDR1 * 255)
+  cv2.imwrite('./results/part_four/hdr2_tonemap_v2.png', tonemapHDR2 * 255)
+
+def main():
+  part_one()
+
+  original_images, modified_images = part_two()
+
+  hrd1, hrd2 = part_three(original_images, modified_images)
+
+  part_four(hrd1, hrd2)
+
+main()
