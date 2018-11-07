@@ -22,15 +22,18 @@ def b_g_channel_function(b, channel):
   return np.power(b, color_g[channel])
 
 def copy_image_size(image):
-  return np.zeros((image.shape[0], image.shape[1], 3), np.uint8)
+  return np.zeros((image.shape[0], image.shape[1], 3), np.float32)
 
 def is_pixel_saturated(image, height, width):
   return image.item(height, width, 0) == 255 and image.item(height, width, 1) == 255 and image.item(height, width, 2) == 255
 
-def create_histograms(image, location, name, tree_size):
+def create_histograms(image, location, name, tree_size, use_g):
   for color_index, color in enumerate(color_channels):
     print '  ' * tree_size + color
-    histr = cv2.calcHist([image], [color_index], None, [256], [0, 256])
+    range_max = 256
+    if use_g:
+      range_max = b_g_channel_function(256, color_index)
+    histr = cv2.calcHist([image], [color_index], None, [256], [0, range_max])
 
     plt.figure(1)
     plt.plot(histr, color = color)
@@ -51,8 +54,8 @@ def create_histograms(image, location, name, tree_size):
 def make_images_linear(image):
   for height in range(image.shape[0]):
     for width in range(image.shape[1]):
-      for channel in range(len(color_channels)):
-        if not is_pixel_saturated(image, height, width):
+      if not is_pixel_saturated(image, height, width):
+        for channel in range(len(color_channels)):
           b = image.item(height, width, channel)
           image.itemset((height, width, channel), b_g_channel_function(b, channel))
   return image
@@ -169,8 +172,8 @@ def part_one():
       file.write("#Estimation of parameter g from B'(T)\n#CMPE264 \n#Eduardo Hirata\n#Joshua Pena\n")
 
   #For Nikon pictures 'w1.jpg'
-  # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float64')
-  time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float64')
+  # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float32')
+  time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float32')
 
   color_calibration_images = get_color_calibration_images()
 
@@ -218,7 +221,7 @@ def part_one():
 
     b_a_estimation(mu_img, g, time, color_channel_index)
 
-    color_g.append(g)
+    color_g.append(np.float32(g))
     print 'finished aquiring ' + titles[color_channel_index] + ' g'
   print 'finished part one'
 
@@ -230,10 +233,13 @@ def part_two():
   for image_index, pixel in enumerate(images):
     print pixel
     img = cv2.imread('images/'+str(pixel)+'.JPG')
+    img = cv2.resize(img, (600, 400))
+    print 'shape'
+    print img.shape
 
-    create_histograms(img, './results/part_two/', str(pixel) + '_original', 0)
+    create_histograms(img, './results/part_two/', str(pixel) + '_original', 0, False)
     img = make_images_linear(img)
-    create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1)
+    create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1, True)
 
     original_images.insert(0, img.copy())
 
@@ -241,13 +247,12 @@ def part_two():
 
     if image_index != 0:
       aValue = a_values[image_index]
-
       for height in range(img.shape[0]):
         for width in range(img.shape[1]):
           for color_index, color in enumerate(color_channels):
             img.itemset((height, width, color_index), img.item(height, width, color_index) / aValue)
 
-      create_histograms(img, './results/part_two/', str(pixel) + '_modified', 2)
+      create_histograms(img, './results/part_two/', str(pixel) + '_modified', 2, True)
 
       cv2.imwrite('./results/part_two/new_' + str(pixel) + '_modified.png', img)
 
@@ -290,8 +295,8 @@ def part_three(original_images, modified_images):
         averageValue = averageValue / valuesUsed
         hrd2.itemset((height, width, color_index), averageValue)
 
-  create_histograms(hrd1, './results/part_three/', 'hrd1', 0)
-  create_histograms(hrd2, './results/part_three/', 'hrd2', 0)
+  create_histograms(hrd1, './results/part_three/', 'hrd1', 0, False)
+  create_histograms(hrd2, './results/part_three/', 'hrd2', 0, False)
   cv2.imwrite('./results/part_three/hdr1.png', hrd1)
   cv2.imwrite('./results/part_three/hdr2.png', hrd2)
 
@@ -309,9 +314,9 @@ def part_four(hrd1, hrd2):
 
   hdr1_tonemap = np.clip(tonemapHDR1 * 255, 0, 255).astype('uint8')
   hdr2_tonemap = np.clip(tonemapHDR2 * 255, 0, 255).astype('uint8')
-
   cv2.imwrite('./results/part_four/hdr1_tonemap.png', hdr1_tonemap)
   cv2.imwrite('./results/part_four/hdr2_tonemap.png', hdr2_tonemap)
+
   cv2.imwrite('./results/part_four/hdr1_tonemap_v2.png', tonemapHDR1 * 255)
   cv2.imwrite('./results/part_four/hdr2_tonemap_v2.png', tonemapHDR2 * 255)
 
