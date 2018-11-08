@@ -27,7 +27,7 @@ def copy_image_size(image):
 def is_pixel_saturated(image, height, width):
   return image.item(height, width, 0) == 255 and image.item(height, width, 1) == 255 and image.item(height, width, 2) == 255
 
-def create_histograms(image, location, name, tree_size, use_g):
+def create_histograms(image, location, name, tree_size, bin_size, use_g):
   for color_index, color in enumerate(color_channels):
     range_max = 256
     if use_g:
@@ -232,14 +232,12 @@ def part_two():
     print pixel
     img = cv2.imread('images/'+str(pixel)+'.JPG')
     img = cv2.resize(img, (600, 400))
-    print 'shape'
-    print img.shape
 
     original_images.insert(0, img.copy())
 
-    create_histograms(img, './results/part_two/', str(pixel) + '_original', 0, False)
+    create_histograms(img, './results/part_two/', str(pixel) + '_original', 0, 256, False)
     img = make_images_linear(img)
-    create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1, True)
+    create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1, 25, True)
 
     cv2.imwrite('./results/part_two/new_' + str(pixel) + '.png', img)
 
@@ -250,7 +248,7 @@ def part_two():
           for color_index, color in enumerate(color_channels):
             img.itemset((height, width, color_index), img.item(height, width, color_index) / aValue)
 
-      create_histograms(img, './results/part_two/', str(pixel) + '_modified', 2, True)
+      create_histograms(img, './results/part_two/', str(pixel) + '_modified', 2, 25, True)
 
       cv2.imwrite('./results/part_two/new_' + str(pixel) + '_modified.png', img)
 
@@ -293,8 +291,8 @@ def part_three(original_images, modified_images):
         averageValue = averageValue / valuesUsed
         hrd2.itemset((height, width, color_index), averageValue)
 
-  create_histograms(hrd1, './results/part_three/', 'hrd1', 0, False)
-  create_histograms(hrd2, './results/part_three/', 'hrd2', 0, False)
+  create_histograms(hrd1, './results/part_three/', 'hrd1', 0, 256, False)
+  create_histograms(hrd2, './results/part_three/', 'hrd2', 0, 256, False)
   cv2.imwrite('./results/part_three/hdr1.png', hrd1)
   cv2.imwrite('./results/part_three/hdr2.png', hrd2)
 
