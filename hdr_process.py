@@ -29,7 +29,6 @@ def is_pixel_saturated(image, height, width):
 
 def create_histograms(image, location, name, tree_size, use_g):
   for color_index, color in enumerate(color_channels):
-    print '  ' * tree_size + color
     range_max = 256
     if use_g:
       range_max = b_g_channel_function(256, color_index)
@@ -42,23 +41,24 @@ def create_histograms(image, location, name, tree_size, use_g):
     plt.figure(1)
 
     plt.xlim([0, 256])
+    # plt.ylim([0, 256])
     plt.savefig(location + color + '_' + name + '.png', bbox_inches='tight')
     plt.close()
 
   plt.figure(2)
   plt.xlim([0, 256])
-  # plt.ylim([0, 200000])
   plt.savefig(location + 'all_' + name + '.png', bbox_inches='tight')
   plt.close()
 
 def make_images_linear(image):
+  new_image = copy_image_size(image)
   for height in range(image.shape[0]):
     for width in range(image.shape[1]):
       if not is_pixel_saturated(image, height, width):
         for channel in range(len(color_channels)):
           b = image.item(height, width, channel)
-          image.itemset((height, width, channel), b_g_channel_function(b, channel))
-  return image
+          new_image.itemset((height, width, channel), b_g_channel_function(b, channel))
+  return new_image
 
 def get_color_calibration_images():
   calibration_images = []
@@ -122,7 +122,6 @@ def save_cropped_images(crop_img, color_channel_index):
 
 def estimate_g_by_b(mu_img, time, color_channel_index):
   slope, intercept, r,p,sigma = linregress(time,mu_img)
-  # print(slope,intercept,r,p,sigma)
   y= intercept + slope * time
   plt.figure()
   plt.plot(time,mu_img,'b', time,y,'r', time,mu_img,'*' , label ='y=%.2f ax+%.2f'%(slope,intercept)),
@@ -142,7 +141,6 @@ def plot_log_b_for_t(mu_img, time, color_channel_index):
   g=1/a
   b=intercept2
   ylog=b + a*logT
-  # print(logB,logT,ylog)
   plt.plot(logT,logB,'b',logT,ylog,'r', logT,logB,'*', label ='y=%.2fx + %.2f'%(a,b))
   plt.title("Estimation for parameter g from Log(B'(T)') Col="+ str(titles[color_channel_index]))
   plt.ylabel("Pixel Intesity Log(B(s)')")
@@ -237,11 +235,11 @@ def part_two():
     print 'shape'
     print img.shape
 
+    original_images.insert(0, img.copy())
+
     create_histograms(img, './results/part_two/', str(pixel) + '_original', 0, False)
     img = make_images_linear(img)
     create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1, True)
-
-    original_images.insert(0, img.copy())
 
     cv2.imwrite('./results/part_two/new_' + str(pixel) + '.png', img)
 

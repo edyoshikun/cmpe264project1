@@ -12,15 +12,13 @@ with open("RGB_estimation_results.txt", "w") as file:
 images=[]
 titles=['blue','green','red']
 
-pixels = (400, 200, 30, 15, 8, 45)
-
 #Read the image files 'p' for phone and 'w' for Nikon pictures
-for index, pixel in enumerate(pixels):
-   images.append(cv2.imread('joapena-images/'+str(pixel)+'.JPG'))
+for n in range(1,6):
+   images.append(cv2.imread('./phoneCalibration/p'+str(n)+'.JPG'))
 
 #For Nikon pictures 'w1.jpg'
 # time=np.array([1/2500,1/1000,1/500,1/50,1/40,1/25],dtype='float64')
-time=np.array([1/320,1/200,1/80,1/50,1/25],dtype='float64')
+time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float64')
 
 blue=[]
 green=[]
@@ -35,6 +33,7 @@ for img in images:
 colors=[blue,green,red]
 
 for i,col in enumerate(tuple(colors)):
+
     plt.figure()
     for n , img in enumerate(tuple(col)):
         plt.subplot(3,3,n+1), plt.imshow(img,'gray')
@@ -60,7 +59,7 @@ for i,col in enumerate(tuple(colors)):
     center_h = int(round(col[0].shape[1]/2))
     # print(col[0].shape[0], col[0].shape[1])
     # print(center_w , center_h)
-    off= 400
+    off= 400;
 
     ##################################Cropped images##############################
     cr_im_array = []
