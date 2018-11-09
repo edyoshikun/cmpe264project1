@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
-import matplotlib.gridspec as gp
 
 titles=['blue','green','red']
 off= 400
@@ -32,7 +31,7 @@ def create_histograms(image, location, name, tree_size, bin_size, use_g):
     range_max = 256
     if use_g:
       range_max = b_g_channel_function(256, color_index)
-    histr = cv2.calcHist([image], [color_index], None, [256], [0, range_max])
+    histr = cv2.calcHist([image], [color_index], None, [bin_size], [0, range_max])
 
     plt.figure(1)
     plt.plot(histr, color = color)
