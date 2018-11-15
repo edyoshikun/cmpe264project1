@@ -12,6 +12,7 @@ subplot_row = 3
 # the names of the images being used for the hdr process. each number is how long t was.
 images = (200, 800, 4000)
 
+# if you want to skip running part one, you enter values for g here as b, g, and r as well as comment out part_one in main
 color_g = []
 
 a_values = []
@@ -27,7 +28,7 @@ from_color_array = [[255, 0, 0], [0, 255, 0], [0, 0, 255]]
 def b_g_channel_function(b, channel):
   return np.power(b, color_g[channel])
 
-# copies the image size
+# copies the image size. each pixel is now saved as a float32 rather than an int
 def copy_image_size(image):
   return np.zeros((image.shape[0], image.shape[1], 3), np.float32)
 
@@ -75,7 +76,7 @@ def make_images_linear(image):
 # returns the images for part one split up by color channel
 def get_color_calibration_images(time):
   calibration_images = []
-  # Read the image files 'p' for phone and 'w' for Nikon pictures
+  # Read the image files 'p' for phone, 'w' for Nikon pictures, and 'i' for the iPhone
   for n in range(1,len(time) + 1):
     calibration_images.append(cv2.imread('./calibrationPhotos/p/p'+str(n)+'.JPG'))
 
@@ -117,6 +118,7 @@ def plot_channel_calibration_histograms(color_channel_images, color_channel_inde
       plt.savefig('./results/part_one/histogram_col-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
   plt.close()
 
+# plots the masked images
 def plot_masked_images(masked_img, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(masked_img)):
@@ -127,6 +129,7 @@ def plot_masked_images(masked_img, color_channel_index):
       plt.savefig('./results/part_one/masked_img-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
   plt.close()
 
+# plots the histogram of the masked images
 def plot_masked_images_histogram(hist_mask, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(hist_mask)):
@@ -138,6 +141,7 @@ def plot_masked_images_histogram(hist_mask, color_channel_index):
     plt.savefig('./results/part_one/mask_hist-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
   plt.close()
 
+# saves the cropped images of the selected color channel
 def save_cropped_images(crop_img, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(crop_img)):
@@ -148,6 +152,7 @@ def save_cropped_images(crop_img, color_channel_index):
     plt.savefig('./results/part_one/crop_img-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
   plt.close()
 
+# plots the values of each image according to the g by b
 def estimate_g_by_b(mu_img, time, color_channel_index):
   plt.figure()
   plt.plot(time,mu_img,'b',time,mu_img,'*'),
@@ -158,6 +163,7 @@ def estimate_g_by_b(mu_img, time, color_channel_index):
   plt.savefig('./results/part_one/g_estimate-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
   plt.close()
 
+# plots the log of b by the log of t
 def plot_log_b_for_t(mu_img, time, color_channel_index):
   plt.figure()
   logB=np.log10(mu_img)
@@ -180,6 +186,7 @@ def plot_log_b_for_t(mu_img, time, color_channel_index):
   plt.close()
   return g
 
+# plots the t by the pixel intensity
 def b_a_estimation(mu_img, g, time, color_channel_index):
   plt.figure()
   Bg=np.power(mu_img,g)
@@ -190,12 +197,13 @@ def b_a_estimation(mu_img, g, time, color_channel_index):
   plt.savefig('./results/part_one/g_estimate_a-'+ str(titles[color_channel_index])+'.png', bbox_inches='tight')
   plt.close()
 
+# runs the part one of the project: runs radiometric calibration for the device
 def part_one():
-  #File to output the values of a and g based on the estimation
+  # File to output the values of a and g based on the estimation
   with open("./RGB_estimation_results.txt", "w") as file:
       file.write("#Estimation of parameter g from B'(T)\n#CMPE264 \n#Eduardo Hirata\n#Joshua Pena\n")
 
-  #For Nikon pictures 'w1.jpg'
+  # For Nikon pictures 'w1.jpg'
   # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float32') # w
   time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float32') # p
   # time=np.array([1.0/1500,1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45,1.0/30,1.0/20,1.0/15],dtype='float32') # j
@@ -216,12 +224,10 @@ def part_one():
 
     plot_channel_calibration_histograms(color_channel_images, color_channel_index)
 
-    #To get the central pixel, lets create a rectangular mask that takes the pixels in the middle
+    # To get the central pixel, lets create a rectangular mask that takes the pixels in the middle
     mask = np.zeros(color_channel_images[0].shape[:2],np.uint8)
     center_w = int(round(color_channel_images[0].shape[0]/2))
     center_h = int(round(color_channel_images[0].shape[1]/2))
-    # print(col[0].shape[0], col[0].shape[1])
-    # print(center_w , center_h)
 
     ###############################Apply a Mask #####################################
     masked_img=[]
@@ -252,7 +258,7 @@ def part_one():
     print('finished aquiring ' + titles[color_channel_index] + ' g')
   print('finished part one')
 
-
+# runs the part two of the project: linearizes each image and divides by corresponding ai
 def part_two():
   original_images = []
   modified_images = []
@@ -260,19 +266,23 @@ def part_two():
   for image_index, pixel in enumerate(images):
     print(pixel)
     img = cv2.imread('images/'+str(pixel)+'.jpg')
-    # img = cv2.resize(img, (408, 306)) # j, i
-    img = cv2.resize(img, (576, 432)) # c
+    # resize the image to reduce the computation time. for better results, keep the ratio of the original image.
+    img = cv2.resize(img, (576, 432))
 
+    # keep a copy of the original images to check which pixels are originally saturated later on
     original_images.append(img.copy())
 
+    # saves a copy of the original image
     cv2.imwrite('./results/part_two/original_' + str(pixel) + '.png', img)
 
     create_histograms(img, './results/part_two/', str(pixel) + '_original', 0, 256, False)
     img = make_images_linear(img)
     create_histograms(img, './results/part_two/', str(pixel) + '_linear', 1, 25, True)
 
+    # save a copy of the image after linearization
     cv2.imwrite('./results/part_two/new_' + str(pixel) + '_linear.png', img)
 
+    # modifies each pixel color channel by the corresponding value of ai for the image
     if image_index != len(images) - 1:
       aValue = a_values[image_index]
       for height in range(img.shape[0]):
@@ -282,16 +292,19 @@ def part_two():
 
       create_histograms(img, './results/part_two/', str(pixel) + '_modified', 2, 25, True)
 
+      # save a copy of the image after the division by ai
       cv2.imwrite('./results/part_two/new_' + str(pixel) + '_modified.png', img)
 
     modified_images.append(img)
   
   return original_images, modified_images
 
+# runs the part three of the project: creates the composite images
 def part_three(original_images, modified_images):
   hdr1 = copy_image_size(modified_images[0])
   hdr2 = copy_image_size(modified_images[0])
 
+  # checks which pixels are saturated for each of the images. the saturated pixels are shown as white in the resulting images.
   for image_index, image in enumerate(tuple(original_images)):
     saturated_image = copy_image_size(image)
     for height in range(saturated_image.shape[0]):
@@ -309,16 +322,27 @@ def part_three(original_images, modified_images):
   pixel_from_together_hdr1 = copy_image_size(modified_images[0])
   pixel_from_together_hdr2 = copy_image_size(modified_images[0])
 
+  # does the composition algorithm 1 and 2 for each pixel
   for height in range(hdr1.shape[0]):
     for width in range(hdr1.shape[1]):
+      # runs the composition algorithm 1 on pixel
       for image_index, image in enumerate(tuple(modified_images)):
-        if not is_pixel_saturated(original_images[image_index], height, width):
+        # find the first unsaturated pixel to use
+        if image_index == len(modified_images) - 1:
           hdr1[height, width] = image[height, width]
 
+          # stores which image the pixel was used from 
+          pixel_from_image_array[image_index][height, width] = [255, 255, 255]
+          pixel_from_together_hdr1[height, width] = from_color_array[image_index]
+        elif not is_pixel_saturated(original_images[image_index], height, width):
+          hdr1[height, width] = image[height, width]
+
+          # stores which image the pixel was used from 
           pixel_from_image_array[image_index][height, width] = [255, 255, 255]
           pixel_from_together_hdr1[height, width] = from_color_array[image_index]
           break
 
+      # takes the average value of all the non saturated values
       for color_index, color in enumerate(color_channels):
         averageValue = 0
         valuesUsed = 0
@@ -326,6 +350,7 @@ def part_three(original_images, modified_images):
           if not is_pixel_saturated(original_images[image_index], height, width):
             averageValue += image.item(height, width, color_index)
             valuesUsed += 1
+            # stores which image contribued to the average 
             pixel_from_together_hdr2.itemset((height, width, image_index), 255)
           else:
             pixel_from_together_hdr2.itemset((height, width, color_index), 0)
@@ -333,7 +358,7 @@ def part_three(original_images, modified_images):
         if valuesUsed != 0:
           averageValue = averageValue / valuesUsed
         else:
-          averageValue = 0
+          averageValue = 255
         hdr2.itemset((height, width, color_index), averageValue)
 
   create_histograms(hdr1, './results/part_three/', 'hdr1', 0, 256, True)
@@ -348,6 +373,7 @@ def part_three(original_images, modified_images):
 
   return hdr1, hdr2
 
+# runs the part four of the project: computes the tonemap for the composite images
 def part_four(hdr1, hdr2, gamma, intensity, light_adapt, color_adapt):
   cv2.imwrite('./results/part_four/hdr1_original.png', hdr1)
   cv2.imwrite('./results/part_four/hdr2_original.png', hdr2)
