@@ -96,8 +96,8 @@ def plot_original_images(original_img, time):
   for n, img in enumerate(tuple(original_img)):
       plt.subplot(subplot_col,subplot_row,n+1), plt.imshow(img,'gray')
       plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
-      plt.suptitle("Radiometric Calibration Images")
-      plt.title("T="+ str(time[n]) + ", G=200")
+      plt.suptitle("Radiometric Calibration Images, G=200"")
+      plt.title("T="+ str(time[n]))
       plt.savefig('./results/part_one/original_img.png', bbox_inches='tight')
   plt.close()
 
