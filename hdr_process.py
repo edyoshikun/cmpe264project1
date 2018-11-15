@@ -5,37 +5,39 @@ from scipy.stats import linregress
 
 titles=['blue','green','red']
 off= 400
-subplot_col = 3
-subplot_row = 2
 
+subplot_col = 2
+subplot_row = 3
+
+# the names of the images being used for the hdr process. each number is how long t was.
 images = (200, 800, 4000)
 
 color_g = []
-# color_g = [0.3479179141328855, 2.2564887647925436, 3.5311952630388665] # camera
-# color_g = [2.0923762339482535, 2.2983849203788567, 2.307665215570257] # android
-# color_g = [1.6333170532734023, 3.37945072534680, 4.072643464819345] # joshua - j
-# color_g = [2.686591551386053, 3.4169576028486985, 2.758177317545983] # iphone - i
-# color_g = [1.8225188425112944, 4.439699392384591, 26.16611057711184] # camera - c
-# color_g = [3.6333170532734023, 3.67945072534680, 3.672643464819345] # check
 
 a_values = []
 
+# calculates the ai value for each image
 for index, pixel in enumerate(images):
   a_values.append(images[len(images) - 1] / float(images[index]))
 
 color_channels = ('b', 'g', 'r')
 from_color_array = [[255, 0, 0], [0, 255, 0], [0, 0, 255]]
 
+# takes in a pixel brightness and calculates the linearized value according to the channel
 def b_g_channel_function(b, channel):
   return np.power(b, color_g[channel])
 
+# copies the image size
 def copy_image_size(image):
   return np.zeros((image.shape[0], image.shape[1], 3), np.float32)
 
+# calculates if a pixel is saturated given an image, height, and width. 
+# if any of the color channels are saturated, it returns true.
 def is_pixel_saturated(image, height, width):
   threshold_value = 255
   return image.item(height, width, 0) >= threshold_value or image.item(height, width, 1) >= threshold_value or image.item(height, width, 2) >= threshold_value
 
+# plots and saves color channel histograms individually and all together for an image
 def create_histograms(image, location, name, tree_size, bin_size, use_g):
   for color_index, color in enumerate(color_channels):
     range_max = 255
@@ -59,6 +61,7 @@ def create_histograms(image, location, name, tree_size, bin_size, use_g):
   plt.savefig(location + 'all_' + name + '.png', bbox_inches='tight')
   plt.close()
 
+# it takes in an image and returns an image with each pixel recalculated according to the proper g value
 def make_images_linear(image):
   new_image = copy_image_size(image)
   for height in range(image.shape[0]):
@@ -69,6 +72,7 @@ def make_images_linear(image):
           new_image.itemset((height, width, channel), b_g_channel_function(b, channel))
   return new_image
 
+# returns the images for part one split up by color channel
 def get_color_calibration_images(time):
   calibration_images = []
   # Read the image files 'p' for phone and 'w' for Nikon pictures
@@ -89,6 +93,7 @@ def get_color_calibration_images(time):
 
   return [blue,green,red]
 
+# plots all original images used for the radiometric calibration
 def plot_original_images(original_img, time):
   plt.figure()
   for n, img in enumerate(tuple(original_img)):
@@ -100,6 +105,7 @@ def plot_original_images(original_img, time):
       plt.savefig('./results/part_one/original_img.png', bbox_inches='tight')
   plt.close()
 
+# plots the selected color channel for the radiometric calibration
 def plot_channel_calibration_histograms(color_channel_images, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(color_channel_images)):
