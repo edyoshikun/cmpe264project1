@@ -71,11 +71,13 @@ def make_images_linear(image):
           new_image.itemset((height, width, channel), b_g_channel_function(b, channel))
   return new_image
 
-def get_color_calibration_images(time_len):
+def get_color_calibration_images(time):
   calibration_images = []
   # Read the image files 'p' for phone and 'w' for Nikon pictures
-  for n in range(1,time_len + 1):
+  for n in range(1,len(time) + 1):
     calibration_images.append(cv2.imread('./calibrationPhotos/p/p'+str(n)+'.JPG'))
+
+  plot_original_images(calibration_images, time)
 
   blue=[]
   green=[]
@@ -88,6 +90,16 @@ def get_color_calibration_images(time_len):
       red.append(r)
 
   return [blue,green,red]
+
+def plot_original_images(original_img, time):
+  plt.figure()
+  for n, img in enumerate(tuple(original_img)):
+      plt.subplot(subplot_col,subplot_row,n+1), plt.imshow(img,'gray')
+      plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
+      plt.suptitle("Radiometric Calibration Images")
+      plt.title("T="+ str(time[n]) + ", G=200")
+      plt.savefig('./results/part_one/original_img.png', bbox_inches='tight')
+  plt.close()
 
 def plot_channel_calibration_histograms(color_channel_images, color_channel_index):
   plt.figure()
@@ -132,10 +144,8 @@ def save_cropped_images(crop_img, color_channel_index):
   plt.close()
 
 def estimate_g_by_b(mu_img, time, color_channel_index):
-  slope, intercept, r,p,sigma = linregress(time,mu_img)
-  y= intercept + slope * time
   plt.figure()
-  plt.plot(time,mu_img,'b', time,y,'r', time,mu_img,'*' , label ='y=%.2f ax+%.2f'%(slope,intercept)),
+  plt.plot(time,mu_img,'b',time,mu_img,'*'),
   plt.title("Estimation for parameter g from B'(T)' Col="+ str(titles[color_channel_index]))
   plt.ylabel("Pixel Intesity B(T)")
   plt.xlabel("T(s)")
@@ -187,7 +197,7 @@ def part_one():
   # time=np.array([1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45],dtype='float32') # i
   # time=np.array([1.0/200,1.0/100,1.0/80,1.0/60,1.0/50,1.0/40,1.0/30],dtype='float32') # c
 
-  color_calibration_images = get_color_calibration_images(len(time))
+  color_calibration_images = get_color_calibration_images(time)
 
   for color_channel_index, color_channel_images in enumerate(tuple(color_calibration_images)):
     plt.figure()
