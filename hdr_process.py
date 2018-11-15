@@ -14,6 +14,8 @@ images = (200, 800, 4000)
 
 # if you want to skip running part one, you enter values for g here as b, g, and r as well as comment out part_one in main
 color_g = []
+# color_g = [2.0923762339482535, 2.2983849203788567, 2.307665215570257] #p
+# color_g = [0.3479179141328855, 2.2564887647925436, 3.5311952630388665] #w
 
 a_values = []
 
