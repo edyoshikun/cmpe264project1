@@ -6,12 +6,19 @@ from scipy.stats import linregress
 titles=['blue','green','red']
 off= 400
 subplot_col = 4
+subplot_row = 5
 
-images = (45, 90, 1000)
-# color_g = []
+# images = (45, 250, 1000) # j, i
+# images = (400, 640, 1600) # p
+images = (1, 2, 3)
+
+color_g = []
 # color_g = [0.3479179141328855, 2.2564887647925436, 3.5311952630388665] # camera
-# color_g = [0.3479179141328855, 2.2564887647925436, 3.5311952630388665] # android
-color_g = [1.6333170532734023, 3.37945072534680, 4.072643464819345] # iphone
+# color_g = [2.0923762339482535, 2.2983849203788567, 2.307665215570257] # android
+# color_g = [1.6333170532734023, 3.37945072534680, 4.072643464819345] # joshua - j
+# color_g = [2.686591551386053, 3.4169576028486985, 2.758177317545983] # iphone - i
+# color_g = [1.8225188425112944, 4.439699392384591, 26.16611057711184] # camera - c
+# color_g = [3.6333170532734023, 3.67945072534680, 3.672643464819345] # check
 
 a_values = []
 
@@ -28,15 +35,15 @@ def copy_image_size(image):
   return np.zeros((image.shape[0], image.shape[1], 3), np.float32)
 
 def is_pixel_saturated(image, height, width):
-  threshold_value = 250
-  return image.item(height, width, 0) >= threshold_value and image.item(height, width, 1) >= threshold_value and image.item(height, width, 2) >= threshold_value
+  threshold_value = 255
+  return image.item(height, width, 0) >= threshold_value or image.item(height, width, 1) >= threshold_value or image.item(height, width, 2) >= threshold_value
 
 def create_histograms(image, location, name, tree_size, bin_size, use_g):
   for color_index, color in enumerate(color_channels):
     range_max = 255
     if use_g:
       range_max = b_g_channel_function(256, color_index)
-    histr = cv2.calcHist([image], [color_index], None, [255], [0, range_max])
+    histr = cv2.calcHist([image], [color_index], None, [bin_size], [0, range_max])
 
     plt.figure(1)
     plt.plot(histr, color = color)
@@ -68,7 +75,7 @@ def get_color_calibration_images(time_len):
   calibration_images = []
   # Read the image files 'p' for phone and 'w' for Nikon pictures
   for n in range(1,time_len + 1):
-    calibration_images.append(cv2.imread('./calibrationPhotos/j/j'+str(n)+'.jpeg'))
+    calibration_images.append(cv2.imread('./calibrationPhotos/p/p'+str(n)+'.JPG'))
 
   blue=[]
   green=[]
@@ -85,7 +92,7 @@ def get_color_calibration_images(time_len):
 def plot_channel_calibration_histograms(color_channel_images, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(color_channel_images)):
-      plt.subplot(subplot_col,3,n+1),
+      plt.subplot(subplot_col,subplot_row,n+1),
       plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
       plt.hist(img.ravel(),256,[0,256])
       plt.suptitle("Histogram of Images")
@@ -96,7 +103,7 @@ def plot_channel_calibration_histograms(color_channel_images, color_channel_inde
 def plot_masked_images(masked_img, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(masked_img)):
-      plt.subplot(subplot_col,3,n+1), plt.imshow(img,'gray')
+      plt.subplot(subplot_col,subplot_row,n+1), plt.imshow(img,'gray')
       plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
       plt.suptitle("Masked Img")
       plt.title("Col= "+ str(titles[color_channel_index])+" img=%d" %n)
@@ -106,7 +113,7 @@ def plot_masked_images(masked_img, color_channel_index):
 def plot_masked_images_histogram(hist_mask, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(hist_mask)):
-    plt.subplot(subplot_col,3,n+1), plt.plot(img)
+    plt.subplot(subplot_col,subplot_row,n+1), plt.plot(img)
     plt.suptitle("Center Pixels of Images")
     plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
     plt.xlim([0,256])
@@ -117,7 +124,7 @@ def plot_masked_images_histogram(hist_mask, color_channel_index):
 def save_cropped_images(crop_img, color_channel_index):
   plt.figure()
   for n, img in enumerate(tuple(crop_img)):
-    plt.subplot(subplot_col,3,n+1), plt.imshow(img,'gray')
+    plt.subplot(subplot_col,subplot_row,n+1), plt.imshow(img,'gray')
     plt.suptitle("Cropped Images")
     plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
     plt.title('Col=' + str(titles[color_channel_index])+" img=%d"%n)
@@ -174,16 +181,18 @@ def part_one():
       file.write("#Estimation of parameter g from B'(T)\n#CMPE264 \n#Eduardo Hirata\n#Joshua Pena\n")
 
   #For Nikon pictures 'w1.jpg'
-  # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float32')
-  # time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float32')
-  time=np.array([1.0/1500,1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45,1.0/30,1.0/20,1.0/15],dtype='float32')
+  # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float32') # w
+  time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float32') # p
+  # time=np.array([1.0/1500,1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45,1.0/30,1.0/20,1.0/15],dtype='float32') # j
+  # time=np.array([1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45],dtype='float32') # i
+  # time=np.array([1.0/200,1.0/100,1.0/80,1.0/60,1.0/50,1.0/40,1.0/30],dtype='float32') # c
 
   color_calibration_images = get_color_calibration_images(len(time))
 
   for color_channel_index, color_channel_images in enumerate(tuple(color_calibration_images)):
     plt.figure()
     for n , img in enumerate(tuple(color_channel_images)):
-        plt.subplot(subplot_col,3,n+1), plt.imshow(img,'gray')
+        plt.subplot(subplot_col,subplot_row,n+1), plt.imshow(img,'gray')
         plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.4, hspace=0.7)
         plt.suptitle("Original Images")
         plt.title("Col="+ str(titles[color_channel_index])+" img=%d"%n)
@@ -225,8 +234,8 @@ def part_one():
     b_a_estimation(mu_img, g, time, color_channel_index)
 
     color_g.append(np.float32(g))
-    print 'finished aquiring ' + titles[color_channel_index] + ' g'
-  print 'finished part one'
+    print('finished aquiring ' + titles[color_channel_index] + ' g')
+  print('finished part one')
 
 
 def part_two():
@@ -234,9 +243,10 @@ def part_two():
   modified_images = []
 
   for image_index, pixel in enumerate(images):
-    print pixel
-    img = cv2.imread('images/'+str(pixel)+'.jpeg')
-    img = cv2.resize(img, (600, 400))
+    print(pixel)
+    img = cv2.imread('images/'+str(pixel)+'.jpg')
+    # img = cv2.resize(img, (408, 306)) # j, i
+    img = cv2.resize(img, (576, 432)) # c
 
     original_images.append(img.copy())
 
@@ -248,7 +258,7 @@ def part_two():
 
     cv2.imwrite('./results/part_two/new_' + str(pixel) + '_linear.png', img)
 
-    if image_index != 0:
+    if image_index != len(images) - 1:
       aValue = a_values[image_index]
       for height in range(img.shape[0]):
         for width in range(img.shape[1]):
@@ -264,8 +274,8 @@ def part_two():
   return original_images, modified_images
 
 def part_three(original_images, modified_images):
-  hrd1 = copy_image_size(modified_images[0])
-  hrd2 = copy_image_size(modified_images[0])
+  hdr1 = copy_image_size(modified_images[0])
+  hdr2 = copy_image_size(modified_images[0])
 
   for image_index, image in enumerate(tuple(original_images)):
     saturated_image = copy_image_size(image)
@@ -284,11 +294,11 @@ def part_three(original_images, modified_images):
   pixel_from_together_hdr1 = copy_image_size(modified_images[0])
   pixel_from_together_hdr2 = copy_image_size(modified_images[0])
 
-  for height in range(hrd1.shape[0]):
-    for width in range(hrd1.shape[1]):
+  for height in range(hdr1.shape[0]):
+    for width in range(hdr1.shape[1]):
       for image_index, image in enumerate(tuple(modified_images)):
         if not is_pixel_saturated(original_images[image_index], height, width):
-          hrd1[height, width] = image[height, width]
+          hdr1[height, width] = image[height, width]
 
           pixel_from_image_array[image_index][height, width] = [255, 255, 255]
           pixel_from_together_hdr1[height, width] = from_color_array[image_index]
@@ -305,44 +315,52 @@ def part_three(original_images, modified_images):
           else:
             pixel_from_together_hdr2.itemset((height, width, color_index), 0)
 
-        averageValue = averageValue / valuesUsed
-        hrd2.itemset((height, width, color_index), averageValue)
+        if valuesUsed != 0:
+          averageValue = averageValue / valuesUsed
+        else:
+          averageValue = 0
+        hdr2.itemset((height, width, color_index), averageValue)
 
-  create_histograms(hrd1, './results/part_three/', 'hrd1', 0, 256, False)
-  create_histograms(hrd2, './results/part_three/', 'hrd2', 0, 256, False)
-  cv2.imwrite('./results/part_three/hdr1.png', hrd1)
-  cv2.imwrite('./results/part_three/hdr2.png', hrd2)
+  create_histograms(hdr1, './results/part_three/', 'hdr1', 0, 256, True)
+  create_histograms(hdr2, './results/part_three/', 'hdr2', 0, 256, True)
+  cv2.imwrite('./results/part_three/hdr1.png', hdr1)
+  cv2.imwrite('./results/part_three/hdr2.png', hdr2)
 
   cv2.imwrite('./results/part_three/pixel_from_together_hdr1.png', pixel_from_together_hdr1)
   cv2.imwrite('./results/part_three/pixel_from_together_hdr2.png', pixel_from_together_hdr2)
   for image_index, image in enumerate(tuple(pixel_from_image_array)):
-    cv2.imwrite('./results/part_three/' + str(3 - image_index) + '.png', image)
+    cv2.imwrite('./results/part_three/pixels_from_' + str(images[image_index]) + '.png', image)
 
-  return hrd1, hrd2
+  return hdr1, hdr2
 
-def part_four(hrd1, hrd2):
-  cv2.imwrite('./results/part_four/hdr1_original.png', hrd1)
-  cv2.imwrite('./results/part_four/hdr2_original.png', hrd2)
+def part_four(hdr1, hdr2, gamma, intensity, light_adapt, color_adapt):
+  cv2.imwrite('./results/part_four/hdr1_original.png', hdr1)
+  cv2.imwrite('./results/part_four/hdr2_original.png', hdr2)
 
-  tonemap = cv2.createTonemapReinhard(1.5, 0, 0, 0)
-  tonemapHDR1 = tonemap.process(hrd1)
-  tonemapHDR2 = tonemap.process(hrd2)
+  tonemap = cv2.createTonemapReinhard(gamma, intensity, light_adapt, color_adapt)
+  tonemapHDR1 = tonemap.process(hdr1)
+  tonemapHDR2 = tonemap.process(hdr2)
 
   hdr1_tonemap = np.clip(tonemapHDR1 * 255, 0, 255).astype('uint8')
   hdr2_tonemap = np.clip(tonemapHDR2 * 255, 0, 255).astype('uint8')
-  cv2.imwrite('./results/part_four/hdr1_tonemap.png', hdr1_tonemap)
-  cv2.imwrite('./results/part_four/hdr2_tonemap.png', hdr2_tonemap)
+  cv2.imwrite('./results/part_four/hdr1_tonemap_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', hdr1_tonemap)
+  cv2.imwrite('./results/part_four/hdr2_tonemap_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', hdr2_tonemap)
 
-  cv2.imwrite('./results/part_four/hdr1_tonemap_v2.png', tonemapHDR1 * 255)
-  cv2.imwrite('./results/part_four/hdr2_tonemap_v2.png', tonemapHDR2 * 255)
+  cv2.imwrite('./results/part_four/hdr1_tonemap_v2_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', tonemapHDR1 * 255)
+  cv2.imwrite('./results/part_four/hdr2_tonemap_v2_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', tonemapHDR2 * 255)
 
 def main():
-  # part_one()
+  part_one()
 
   original_images, modified_images = part_two()
 
-  hrd1, hrd2 = part_three(original_images, modified_images)
+  hdr1, hdr2 = part_three(original_images, modified_images)
 
-  part_four(hrd1, hrd2)
+  part_four(hdr1, hdr2, 3.5, -2.0, 0.25, 0.75)
+
+  part_four(hdr1, hdr2, 3.5, 0.0, 0.0, 0.0)
+  part_four(hdr1, hdr2, 3.5, -5.0, 0.0, 0.0)
+  part_four(hdr1, hdr2, 3.5, 0.0, 0.25, 0.0)
+  part_four(hdr1, hdr2, 3.5, 0.0, 0.0, 0.25)
 
 main()
