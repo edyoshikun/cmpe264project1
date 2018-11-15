@@ -63,7 +63,7 @@ def create_histograms(image, location, name, tree_size, bin_size, use_g):
     plt.plot(histr, color = color)
     plt.figure(1)
 
-    plt.xlim([0, 256])
+    plt.xlim([0, bin_size + 1])
     # plt.ylim([0, 256])
     plt.savefig(location + color + '_' + name + '.png', bbox_inches='tight')
     plt.close()
@@ -385,21 +385,18 @@ def part_three(original_images, modified_images):
   return hdr1, hdr2
 
 # runs the part four of the project: computes the tonemap for the composite images
-def part_four(hdr1, hdr2, gamma, intensity, light_adapt, color_adapt):
+def part_four(hdr1, hdr2):
   cv2.imwrite('./results/part_four/hdr1_original.png', hdr1)
   cv2.imwrite('./results/part_four/hdr2_original.png', hdr2)
 
-  tonemap = cv2.createTonemapReinhard(gamma, intensity, light_adapt, color_adapt)
-  tonemapHDR1 = tonemap.process(hdr1)
-  tonemapHDR2 = tonemap.process(hdr2)
+  tonemap1 = cv2.createTonemapReinhard(3.5, -2.0, 0.25, 0.75)
+  tonemap2 = cv2.createTonemapReinhard(3.5, 0.0, 0.25, 0.0)
 
-  hdr1_tonemap = np.clip(tonemapHDR1 * 255, 0, 255).astype('uint8')
-  hdr2_tonemap = np.clip(tonemapHDR2 * 255, 0, 255).astype('uint8')
-  cv2.imwrite('./results/part_four/hdr1_tonemap_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', hdr1_tonemap)
-  cv2.imwrite('./results/part_four/hdr2_tonemap_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', hdr2_tonemap)
+  tonemapHDR1 = tonemap1.process(hdr1)
+  tonemapHDR2 = tonemap2.process(hdr2)
 
-  cv2.imwrite('./results/part_four/hdr1_tonemap_v2_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', tonemapHDR1 * 255)
-  cv2.imwrite('./results/part_four/hdr2_tonemap_v2_g' + str(gamma) + '_i' + str(intensity) + '_la' + str(light_adapt) + '_ca' + str(color_adapt) + '.png', tonemapHDR2 * 255)
+  cv2.imwrite('./results/part_four/hdr1_tonemap.png', tonemapHDR1 * 255)
+  cv2.imwrite('./results/part_four/hdr2_tonemap.png', tonemapHDR2 * 255)
 
 def main():
   part_one()
@@ -408,11 +405,6 @@ def main():
 
   hdr1, hdr2 = part_three(original_images, modified_images)
 
-  part_four(hdr1, hdr2, 3.5, -2.0, 0.25, 0.75)
-
-  part_four(hdr1, hdr2, 3.5, 0.0, 0.0, 0.0)
-  part_four(hdr1, hdr2, 3.5, -5.0, 0.0, 0.0)
-  part_four(hdr1, hdr2, 3.5, 0.0, 0.25, 0.0)
-  part_four(hdr1, hdr2, 3.5, 0.0, 0.0, 0.25)
+  part_four(hdr1, hdr2)
 
 main()
