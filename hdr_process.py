@@ -15,17 +15,6 @@ images = (200, 800, 4000)
 # if you want to skip running part one, you enter values for g here as b, g, and r as well as comment out part_one in main
 color_g = []
 
-# Andorid
-# color_g = [2.0923762339482535, 2.2983849203788567, 2.307665215570257] #p
-
-# Nikon
-# color_g = [0.3479179141328855, 2.2564887647925436, 3.5311952630388665] #w
-# color_g = [3.49756830543343, 8.399425790474908, 55.96911343787966] #c
-
-# iPhone
-# color_g = [1.6333170532734023, 3.379450725346802, 4.072643464819345] #j
-# color_g = [3.7323894632369896, 4.319109930138016, 3.623481795460718] #i
-
 a_values = []
 
 # calculates the ai value for each image
@@ -69,7 +58,7 @@ def create_histograms(image, location, name, tree_size, bin_size, use_g):
     plt.close()
 
   plt.figure(2)
-  plt.xlim([0, 256])
+  plt.xlim([0, bin_size])
   plt.savefig(location + 'all_' + name + '.png', bbox_inches='tight')
   plt.close()
 
@@ -214,12 +203,8 @@ def part_one():
   with open("./RGB_estimation_results.txt", "w") as file:
       file.write("#Estimation of parameter g from B'(T)\n#CMPE264 \n#Eduardo Hirata\n#Joshua Pena\n")
 
-  # For Nikon pictures 'w1.jpg'
-  # time=np.array([1.0/2500,1.0/1000,1.0/500,1.0/50,1.0/40,1.0/25],dtype='float32') # w
+  # For different ratiometric pictures, change values here
   time=np.array([1.0/320,1.0/200,1.0/80,1.0/50,1.0/25],dtype='float32') # p
-  # time=np.array([1.0/1500,1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45,1.0/30,1.0/20,1.0/15],dtype='float32') # j
-  # time=np.array([1.0/1000,1.0/750,1.0/500,1.0/350,1.0/250,1.0/125,1.0/45],dtype='float32') # i
-  # time=np.array([1.0/200,1.0/100,1.0/80,1.0/60,1.0/50,1.0/40,1.0/30],dtype='float32') # c
 
   color_calibration_images = get_color_calibration_images(time)
 
