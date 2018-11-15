@@ -6,16 +6,25 @@ from scipy.stats import linregress
 titles=['blue','green','red']
 off= 400
 
-subplot_col = 2
-subplot_row = 3
+subplot_col = 3
+subplot_row = 2
 
 # the names of the images being used for the hdr process. each number is how long t was.
 images = (200, 800, 4000)
 
 # if you want to skip running part one, you enter values for g here as b, g, and r as well as comment out part_one in main
 color_g = []
+
+# Andorid
 # color_g = [2.0923762339482535, 2.2983849203788567, 2.307665215570257] #p
+
+# Nikon
 # color_g = [0.3479179141328855, 2.2564887647925436, 3.5311952630388665] #w
+# color_g = [3.49756830543343, 8.399425790474908, 55.96911343787966] #c
+
+# iPhone
+# color_g = [1.6333170532734023, 3.379450725346802, 4.072643464819345] #j
+# color_g = [3.7323894632369896, 4.319109930138016, 3.623481795460718] #i
 
 a_values = []
 
