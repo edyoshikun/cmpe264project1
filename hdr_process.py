@@ -5,11 +5,9 @@ from scipy.stats import linregress
 
 titles=['blue','green','red']
 off= 400
-subplot_col = 4
-subplot_row = 5
+subplot_col = 3
+subplot_row = 2
 
-# images = (45, 250, 1000) # j, i
-# images = (400, 640, 1600) # p
 images = (200, 800, 4000)
 
 color_g = []
