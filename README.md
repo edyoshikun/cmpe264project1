@@ -1,4 +1,4 @@
-# CMPE264project1
+# CMPE264project1- HDR
 
 ## Information
 **OS**: Mac/Windows
