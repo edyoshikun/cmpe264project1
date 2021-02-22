@@ -1,9 +1,12 @@
 # CMPE264project1
 
 ## Information
-**OS**: Mac
+**OS**: Mac/Windows
 **Language**: Python 2.7.15
 **Libraries Used**: OpenCV, Numpy, MatPlotLib, Scripy
+
+## Description
+Collaborative project (Joshua Pena & Eduardo Hirata) to develop manual HDR Photography composition. Program requires calibration images as well as 3 photographs at different exposures to make HDR composition.
 
 ## To Run Program:
 ```bash
